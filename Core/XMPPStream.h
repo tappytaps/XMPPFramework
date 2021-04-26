@@ -103,6 +103,7 @@ extern const NSTimeInterval XMPPStreamTimeoutNone;
 **/
 @property (readwrite, copy, nullable) NSString *hostName;
 
+
 /**
  * The port the xmpp server is running on.
  * If you do not explicitly set the port, the default port will be used.
@@ -229,6 +230,16 @@ extern const NSTimeInterval XMPPStreamTimeoutNone;
  * If set to YES, the byte count will be reset just prior to a new connection (in the connect methods).
 **/
 @property (readwrite, assign) BOOL resetByteCountPerConnection;
+
+/**
+ Proprietary quick login implementation
+ */
+@property NSString* quickLoginPassword;
+
+/**
+ UUID that will be used for initial roster fetch during quickLogin
+ */
+@property NSString* rosterFetchUUID;
 
 /**
  * The tag property allows you to associate user defined information with the stream.

@@ -683,6 +683,41 @@ enum XMPPRosterFlags
 	else
 		dispatch_async(moduleQueue, block);
 }
+
+-(void)preconfigureFetchRoster:(NSString*)uuid {
+    // This is a public method, so it may be invoked on any thread/queue.
+    
+    dispatch_block_t block = ^{ @autoreleasepool {
+        
+        if ([self _requestedRoster])
+        {
+            // We've already requested the roster from the server.
+            return;
+        }
+        
+        // <iq type="get">
+        //   <query xmlns="jabber:iq:roster" ver="ver14"/>
+        // </iq>
+        
+        NSXMLElement *query = [NSXMLElement elementWithName:@"query" xmlns:@"jabber:iq:roster"];
+        
+        XMPPIQ *iq = [XMPPIQ iqWithType:@"get" elementID: uuid];
+        [iq addChild:query];
+        
+        [self->xmppIDTracker addElement:iq
+                           target:self
+                         selector:@selector(handleFetchRosterQueryIQ:withInfo:)
+                          timeout:60];
+                
+        [self _setRequestedRoster:YES];
+    }};
+    
+    if (dispatch_get_specific(moduleQueueTag))
+        block();
+    else
+        dispatch_async(moduleQueue, block);
+}
+
 - (void)fetchRosterVersion:(NSString *)version
 {
 	// This is a public method, so it may be invoked on any thread/queue.

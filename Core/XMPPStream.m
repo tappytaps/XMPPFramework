@@ -2003,7 +2003,7 @@ enum XMPPStreamConfig
 		// P.S. - This method is deprecated.
 		
 		id <XMPPSASLAuthentication> someAuth = nil;
-        
+        /*
 		if ([self supportsSCRAMSHA1Authentication])
 		{
 			someAuth = [[XMPPSCRAMSHA1Authentication alloc] initWithStream:self password:password];
@@ -2014,7 +2014,7 @@ enum XMPPStreamConfig
 			someAuth = [[XMPPDigestMD5Authentication alloc] initWithStream:self password:password];
 			result = [self authenticate:someAuth error:&err];
 		}
-		else if ([self supportsPlainAuthentication])
+		else */if ([self supportsPlainAuthentication])
 		{
 			someAuth = [[XMPPPlainAuthentication alloc] initWithStream:self password:password];
 			result = [self authenticate:someAuth error:&err];
@@ -3327,7 +3327,10 @@ enum XMPPStreamConfig
 	
 	NSString *xmlns = @"jabber:client";
 	NSString *xmlns_stream = @"http://etherx.jabber.org/streams";
-	
+    NSString *quickLoginAttrs = @"";
+    if (self.quickLoginPassword && ![self isAuthenticated]) {
+        quickLoginAttrs = [NSString stringWithFormat:@" username='%@' password='%@' resource='%@' roster_fetch_uuid='%@'", myJID_setByClient.user, self.quickLoginPassword, myJID_setByClient.resource, self.rosterFetchUUID];
+    }
 	NSString *temp, *s2;
     if ([self isP2P])
     {
@@ -3356,18 +3359,18 @@ enum XMPPStreamConfig
     {
 		if (myJID_setByClient)
 		{
-			temp = @"<stream:stream xmlns='%@' xmlns:stream='%@' version='1.0' to='%@'>";
-            s2 = [NSString stringWithFormat:temp, xmlns, xmlns_stream, [myJID_setByClient domain]];
+			temp = @"<stream:stream xmlns='%@' xmlns:stream='%@' version='1.0' to='%@' %@>";
+            s2 = [NSString stringWithFormat:temp, xmlns, xmlns_stream, [myJID_setByClient domain], quickLoginAttrs];
 		}
         else if ([hostName length] > 0)
         {
-            temp = @"<stream:stream xmlns='%@' xmlns:stream='%@' version='1.0' to='%@'>";
-            s2 = [NSString stringWithFormat:temp, xmlns, xmlns_stream, hostName];
+            temp = @"<stream:stream xmlns='%@' xmlns:stream='%@' version='1.0' to='%@' %@>";
+            s2 = [NSString stringWithFormat:temp, xmlns, xmlns_stream, hostName, quickLoginAttrs];
         }
         else
         {
-            temp = @"<stream:stream xmlns='%@' xmlns:stream='%@' version='1.0'>";
-            s2 = [NSString stringWithFormat:temp, xmlns, xmlns_stream];
+            temp = @"<stream:stream xmlns='%@' xmlns:stream='%@' version='1.0' %@>";
+            s2 = [NSString stringWithFormat:temp, xmlns, xmlns_stream, quickLoginAttrs];
         }
     }
 	
@@ -3503,6 +3506,13 @@ enum XMPPStreamConfig
 	// Extract the stream features
 	NSXMLElement *features = [rootElement elementForName:@"stream:features"];
 	
+
+    NSXMLElement* f_quickLogin = [features elementForName:@"quickLogin"];
+    if (f_quickLogin) {
+        state = STATE_XMPP_CONNECTED;
+        [multicastDelegate xmppStreamDidAuthenticate:self];
+        return;
+    }
 	// Check to see if TLS is required
 	// Don't forget about that NSXMLElement bug you reported to apple (xmlns is required or element won't be found)
 	NSXMLElement *f_starttls = [features elementForName:@"starttls" xmlns:@"urn:ietf:params:xml:ns:xmpp-tls"];
