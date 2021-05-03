@@ -234,12 +234,7 @@ extern const NSTimeInterval XMPPStreamTimeoutNone;
 /**
  Proprietary quick login implementation
  */
-@property NSString* quickLoginPassword;
-
-/**
- UUID that will be used for initial roster fetch during quickLogin
- */
-@property NSString* rosterFetchUUID;
+@property (readwrite, strong, nullable) NSString* quickLoginPassword;
 
 /**
  * The tag property allows you to associate user defined information with the stream.
@@ -624,6 +619,7 @@ extern const NSTimeInterval XMPPStreamTimeoutNone;
  * If the stream is not yet connected, this method does nothing.
 **/
 - (void)sendElement:(NSXMLElement *)element;
+- (void)forceSendElement:(NSXMLElement *)element;
 
 /**
  * Just like the sendElement: method above,

@@ -2256,7 +2256,7 @@ enum XMPPStreamConfig
 - (void)sendIQ:(XMPPIQ *)iq withTag:(long)tag
 {
 	NSAssert(dispatch_get_specific(xmppQueueTag), @"Invoked on incorrect queue");
-	NSAssert(state == STATE_XMPP_CONNECTED, @"Invoked with incorrect state");
+    NSAssert(state == STATE_XMPP_CONNECTED || state == STATE_XMPP_OPENING, @"Invoked with incorrect state");
 	
 	// We're getting ready to send an IQ.
 	// Notify delegates to allow them to optionally alter/filter the outgoing IQ.
@@ -2473,7 +2473,7 @@ enum XMPPStreamConfig
 - (void)continueSendIQ:(XMPPIQ *)iq withTag:(long)tag
 {
 	NSAssert(dispatch_get_specific(xmppQueueTag), @"Invoked on incorrect queue");
-	NSAssert(state == STATE_XMPP_CONNECTED, @"Invoked with incorrect state");
+	NSAssert(state == STATE_XMPP_CONNECTED || state == STATE_XMPP_OPENING, @"Invoked with incorrect state");
 	
 	NSString *outgoingStr = [iq compactXMLString];
 	NSData *outgoingData = [outgoingStr dataUsingEncoding:NSUTF8StringEncoding];
@@ -2603,6 +2603,26 @@ enum XMPPStreamConfig
 		}
 	}
 }
+
+
+/**
+ * This method handles sending an XML stanza.
+ * If the XMPPStream is not connected, this method does nothing.
+**/
+- (void)forceSendElement:(NSXMLElement *)element
+{
+    if (element == nil) return;
+    
+    dispatch_block_t block = ^{ @autoreleasepool {
+        [self sendElement:element withTag:TAG_XMPP_WRITE_STREAM];
+    }};
+    
+    if (dispatch_get_specific(xmppQueueTag))
+        block();
+    else
+        dispatch_async(xmppQueue, block);
+}
+
 
 /**
  * This method handles sending an XML stanza.
@@ -3329,7 +3349,7 @@ enum XMPPStreamConfig
 	NSString *xmlns_stream = @"http://etherx.jabber.org/streams";
     NSString *quickLoginAttrs = @"";
     if (self.quickLoginPassword && ![self isAuthenticated]) {
-        quickLoginAttrs = [NSString stringWithFormat:@" username='%@' password='%@' resource='%@' roster_fetch_uuid='%@'", myJID_setByClient.user, self.quickLoginPassword, myJID_setByClient.resource, self.rosterFetchUUID];
+        quickLoginAttrs = [NSString stringWithFormat:@" username='%@' password='%@' resource='%@'", myJID_setByClient.user, self.quickLoginPassword, myJID_setByClient.resource];
     }
 	NSString *temp, *s2;
     if ([self isP2P])

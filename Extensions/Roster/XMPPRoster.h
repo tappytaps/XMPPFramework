@@ -176,7 +176,6 @@ NS_ASSUME_NONNULL_BEGIN
 **/
 - (void)fetchRoster;
 - (void)fetchRosterVersion:(nullable NSString *)version;
-- (void)preconfigureFetchRoster:(NSString*)uuid;
 /**
  * Adds the given user to the roster with an optional nickname 
  * and requests permission to receive presence information from them.
